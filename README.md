@@ -139,3 +139,87 @@ Non. Quand un utilisateur quitte, il est retiré du canal, mais le canal reste d
 ---------------------------------------------------------------------------------------------
 
 ## **Limites**
+
+## 2.1 Couplage et contrôle des responsabilités
+
+**— Quelles fonctions du serveur manipulent à la fois l’état métier, les sockets réseau et le journal ? Pouvez-vous identifier un exemple de fonction violant le principe de séparation des responsabilités ?**  
+`envoyer_message()` fait tout : lit l’état, écrit sur les sockets, et journalise. Pas séparé.
+
+**— Si vous supprimez IRCHandler et branchez un autre protocole (HTTP, WebSocket…), combien de fonctions métier devrez-vous réécrire ?**  
+Presque toutes. La logique est collée au réseau. Pas réutilisable facilement.
+
+**— Le protocole est-il une interface explicite du système ou seulement un comportement émergent ? Autrement dit : peut-on découpler les « effets » des commandes de leur format textuel ?**  
+Non. Tout est codé en dur dans `handle()`. Le protocole est implicite, pas découplé.
+
+**— Quelles sont les opérations atomiques ? Peut-on garantir la cohérence du système si une commande échoue à mi-chemin ? (Ex : /msg réussit à moitié : certains reçoivent, d’autres non)**  
+Non. Si `wfile.write()` échoue sur un client, les autres reçoivent quand même. Pas atomique. Pas de rollback.
+
+---
+
+## 2.2 Protocole et interopérabilité
+
+**— Quels types d’erreurs le protocole peut-il exprimer ? Différencie-t-on une erreur de syntaxe, une interdiction d’accès, un état illégal (ex : pas de canal), une erreur serveur ?**  
+Non. Réponse générique genre `Commande inconnue.`. Pas de codes ni types d’erreurs.
+
+**— Pouvez-vous formaliser le protocole actuel (syntaxe, contraintes) sous forme de grammaire normalisée ?**  
+Possible, mais pas fait. Faudrait une grammaire type `/commande [argument]`, avec règles claires.
+
+**— Comment un client non humain saurait-il qu’une ligne reçue est un message utilisateur, une info système, une alerte ?**  
+Impossible. Pas de format clair. Tout est texte. Pas de balise, ni métadonnée.
+
+**— Ce protocole peut-il être versionné ? Peut-on prévoir une rétrocompatibilité ?**  
+Non. Aucun champ version. Toute modif casse les clients existants.
+
+**— Quel est le coût (code, test, fiabilité) de rajouter une commande dans ce protocole par rapport à une API REST bien conçue ?**  
+Plus compliqué. Faut parser le texte, gérer les cas à la main. Pas de standard. Pas d’automatisation. Plus de risques d’erreurs.
+
+---
+
+## 2.3 Testabilité et fiabilité
+
+**— Quels tests unitaires sont aujourd’hui impossibles à écrire sans simuler une socket TCP ? Pourquoi ? Que faudrait-il isoler ?**  
+Tous les tests de commandes. Tout dépend de la socket. Faudrait séparer logique métier de la partie réseau.
+
+**— Quels comportements sont aujourd’hui implicites et non testés ? (Exemples : la disparition silencieuse d’un canal vide, la déconnexion d’un client fantôme, l’ordre d’arrivée des messages)**  
+Canal vide non supprimé. Déconnexion silencieuse possible. Pas de contrôle sur l’ordre des messages.
+
+**— Peut-on simuler un client malveillant qui envoie /msg sans /join ? Comment le serveur réagit-il ? Peut-il être amené à un état invalide ?**  
+Oui. Le serveur répond juste "pas de canal". Pas d’état cassé mais pas protégé non plus. Pas de vraie validation.
+
+**— Le système actuel tolère-t-il les pannes partielles ? (Ex : perte de la socket d’un client, écriture impossible dans le journal, canal corrompu)**  
+Pas vraiment. Si le client plante, le handler nettoie. Mais si l’écriture log échoue, ça affiche juste une erreur. Pas de gestion robuste.
+
+---
+
+## 2.3.1 Scalabilité et distribution
+
+**— L’état du serveur est-il réplicable ? Peut-on faire tourner deux instances concurrentes sans conflit ? Pourquoi pas ?**  
+Non. État en mémoire. Pas distribué. Pas de synchro. Le JSON est local.
+
+**— Quelles ressources sont globales et quelles données pourraient être distribuées ? (Ex : la liste des utilisateurs connectés ? les messages d’un canal ?)**  
+Utilisateurs et canaux = global. Messages aussi. Faudrait séparer ça pour distribuer. Rien prévu pour l’instant.
+
+**— Que faudrait-il pour brancher un système de persistance robuste (base de données ou message queue) à la place du JSON et du wfile ?**  
+Remplacer le `json.dump()` par des appels DB. Les `wfile.write()` par des queues ou sockets managées. Repenser tout l’I/O.
+
+**— Le système actuel est-il capable de gérer des charges réseau variables ? Que se passe-t-il si 1 000 clients se connectent, puis envoient 10 messages chacun dans la même seconde ?**  
+Non. Trop de threads. Trop de logs. Risque de crash, de perte de messages. Le système bloque.
+
+**— Quelle architecture (cluster, bus, micro-services, brokers, etc.) serait capable d’absorber cette charge avec fiabilité ?**  
+Faut du micro-service. Un broker (ex : RabbitMQ) pour les messages. Un service base de données. Plusieurs serveurs. Load balancer.
+
+---
+
+## 2.3.2 Évolutivité du code et découpage en services
+
+**— Quelles commandes actuelles pourraient être déléguées à un service distinct (externe) ? Pourquoi ?**  
+`/log`, `/alert`, `/join`, `/msg`. Car elles touchent des logiques différentes. Facile à isoler.
+
+**— Peut-on identifier une ou plusieurs interfaces métier dans ce système ? Que faudrait-il pour que le serveur devienne une simple “coquille réseau” pilotant des services internes ?**  
+Oui. Interface message, interface canal, interface utilisateur. Faut les extraire dans des modules séparés.
+
+**— Que manque-t-il à ce projet pour le rendre devops-compatible ? (Tests, logs structurés, monitoring, API REST, configuration, conteneurisation…)**  
+Tests unitaires, logs format JSON, métriques Prometheus, API REST, fichier de conf, Dockerfile. Y’a rien de tout ça.
+
+**— À quelles conditions ce serveur peut-il devenir une base pour une architecture micro-services ? (Critères : isolation, communication explicite, synchronisation, persistance, monitoring…)**  
+Faut découper les responsabilités, créer des services autonomes, standardiser les échanges (JSON, HTTP), persister dans une vraie base, ajouter monitoring/logging.
