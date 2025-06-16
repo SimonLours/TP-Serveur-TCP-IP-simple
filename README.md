@@ -45,39 +45,39 @@ JSON pas scalable, pas de base de données,tout en mémoire. Les threads peuvent
 ## 2.4 Portabilité de l’architecture
 
 **— Ce serveur TCP pourrait-il être adapté en serveur HTTP ? Quelles parties seraient conservées, quelles parties changeraient ?**  
-Pas direct. Faut virer toute la partie socket TCP, refaire l’entrée des commandes. Mais l’état (`etat_serveur`) peut rester. Donc il faut découpler la logique métier.
+Pas direct. Faut virer toute la partie socket TCP, refaire l’entrée des commandes. Mais l’état (`etat_serveur`) peut rester. Donc il faut découpler la logique métier
 
 **— Dans une perspective micro-services, quels modules seraient candidats naturels pour devenir des services indépendants ?**  
-Gestion des utilisateurs, gestion des canaux, logs, alerte. Tout ça peut être séparé.
+Gestion des utilisateurs, gestion des canaux, logs, alerte. Tout ça peut être séparé
 
 **— Est-il envisageable de découpler la gestion des utilisateurs de celle des canaux ? Comment ?**  
-Oui, faut séparer les structures de données. Créer deux objets ou services distincts. Ils communiquent entre eux via interface claire.
+Oui, faut séparer les structures de données. Créer deux objets ou services distincts. Ils communiquent entre eux via interface claire
 
 ---
 
 ## 2.5 Fiabilité, tolérance aux erreurs, robustesse
 
 **— Le serveur sait-il détecter une déconnexion brutale d’un client ? Peut-il s’en remettre ?**  
-Oui. Si `readline()` retourne vide, il nettoie l’utilisateur. Ça fonctionne globalement.
+Oui. Si `readline()` retourne vide, il nettoie l’utilisateur. Ça fonctionne globalement !!!!
 
 **— Si un message ne peut pas être livré à un client (socket cassée), le système le détecte-t-il ?**  
-Pas vraiment. Le `write()` est dans un `try`, et souvent ça continue même en cas d’erreur.
+Pas vraiment. Le `write()` est dans un `try`, et souvent ça continue même en cas d’erreur
 
 **— Peut-on garantir une livraison ou au moins une trace fiable de ce qui a été tenté/envoyé ?**  
-Non. Si un client est déconnecté, le message est perdu. Pas de retry, pas de file, juste un log sur le serveur.
+Non. Si un client est déconnecté, le message est perdu. Pas de retry, pas de file, juste un log sur le serveur
 
 ---
 
 ## 2.6 Protocole : structuration et évolutivité
 
 **— Quelles sont les règles implicites du protocole que vous utilisez ? Une ligne = une commande, avec un préfixe (/msg, /join, etc.) et éventuellement des arguments : est-ce un protocole explicite, documenté, formalisé ?**  
-Non. C’est implicite. Ligne texte avec `/commande` + arguments. Pas de doc officielle. Pas de vérif syntaxique poussée.
+Non. C’est implicite. Ligne texte avec `/commande` + arguments. Pas de doc officielle. Pas de vérif syntaxique poussée
 
 **— Le protocole est-il robuste ? Que se passe-t-il si un utilisateur envoie /msg sans texte ? Ou un /join avec un nom de canal invalide ?**  
-Pas toujours géré. Un `/msg` vide passe. Pas de vérification stricte. Le serveur répond parfois, parfois non.
+Pas toujours géré. Un `/msg` vide passe maispas de vérification stricte. Le serveur répond pas tout le temps
 
 **— Peut-on imaginer une spécification formelle de ce protocole ? Un mini-ABNF, une doc à destination des développeurs de client ?**  
-Oui possible. Faut formaliser la syntaxe, faire des règles genre `/commande arg1 arg2`, définir les erreurs.
+Oui possible. Faut formaliser la syntaxe, faire des règles genre `/commande arg1 arg2`, définir les erreurs
 
 **— Quelle serait la différence structurelle entre ce protocole et un protocole REST ou HTTP ?**  
 Ici c’est du texte brut ligne par ligne. REST c’est structuré, avec verbe HTTP, JSON, status code. Ici, rien de tout ça.
