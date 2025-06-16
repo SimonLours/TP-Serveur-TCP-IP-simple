@@ -82,9 +82,14 @@ Oui possible. Faut formaliser la syntaxe, faire des règles genre `/commande arg
 **— Quelle serait la différence structurelle entre ce protocole et un protocole REST ou HTTP ?**  
 Ici c’est du texte brut ligne par ligne. REST c’est structuré, avec verbe HTTP, JSON, status code. Ici, rien de tout ça.
 
+
 ---------------------------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------
+
+
 
 ## 2.1 Analyse du code
 
