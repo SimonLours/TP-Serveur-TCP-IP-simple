@@ -4,11 +4,11 @@ Axel Pedrero / Simon Lours
 ## 2.1 Cohérence concurrente et synchronisation
 
 **— Quels types de problèmes de concurrence peuvent apparaître dans ce système multi-clients ?**  
-Deux clients modifient un même canal en même temps. Résultat possible : perte de données, état incohérent.
+Deux clients modifient un même canal en même temps. il y a donc des pertes de données et l'état est incohérent
 
 **— Que peut-il arriver si deux clients rejoignent ou quittent un canal en même temps ?**  
-Si les deux rejoignent : un des deux peut ne pas être ajouté correctement.  
-S’ils quittent : possible que le dernier utilisateur reste enregistré ou que le canal ne soit pas mis à jour.
+Si les deux rejoignent, un des deux peut ne pas être ajouter correctement.  
+S’ils quittent, il eest possible que le dernier utilisateur reste enregistré ou que le canal ne soit pas mis à jour
 
 **— Votre système est-il vulnérable aux incohérences d’état ou aux conditions de course ? Comment s’en prémunir ?**  
 Oui, sans verrou ça serait dangereux. Mais y’a un `threading.Lock`, donc les accès concurrents sont protégés si c’est bien utilisé.
@@ -18,10 +18,10 @@ Oui, sans verrou ça serait dangereux. Mais y’a un `threading.Lock`, donc les 
 ## 2.2 Modularité et séparation des responsabilités
 
 **— Quelles sont les grandes responsabilités fonctionnelles de votre application serveur (gestion client, traitement commande, envoi message, logs, persistance…) ?**  
-Oui, tout ça : gestion des clients, des pseudos, des canaux, des messages, des logs, et sauvegarde JSON.
+gestion des clients, des pseudos, des canaux, des messages, des logs, et sauvegarde JSON,
 
 **— Peut-on tracer une frontière claire entre logique métier et logique d’entrée/sortie réseau ?**  
-Non. Tout est mélangé dans les méthodes du handler. Commandes, accès à l’état, logs, tout dans les mêmes fonctions.
+Non tout est mélangé dans les méthodes du handler. Commandes, accès à l’état, logs, tout dans les mêmes fonctions
 
 **— En cas d’erreur dans une commande, quelle couche doit réagir ?**  
 C’est le handler qui réagit direct. Soit il écrit un message d’erreur, soit il ignore. Y’a pas de couche dédiée pour ça.
@@ -35,17 +35,17 @@ C’est le handler qui réagit direct. Soit il écrit un message d’erreur, soi
 Faut modifier la méthode `handle()` dans le handler et ajouter une fonction à côté.
 
 **— Que faudrait-il pour que ce serveur fonctionne à grande échelle (plusieurs centaines de clients) ?**  
-Changer le système de persistance (pas de JSON), mieux gérer les threads, remplacer les sockets bloquantes, ajouter des queues/messages.
+Changer le système de persistance (pas de JSON), mieux gérer les threads, remplacer les sockets bloquantes, ajouter des queues/messages
 
 **— Quelles limitations structurelles du code actuel empêchent une montée en charge ?**  
-JSON pas scalable. Pas de base de données. Tout en mémoire. Les threads peuvent exploser si y’a trop de clients. Pas de détection fine des erreurs.
+JSON pas scalable, pas de base de données,tout en mémoire. Les threads peuvent exploser si y’a trop de clients. Pas de détection fine des erreurs
 
 ---
 
 ## 2.4 Portabilité de l’architecture
 
 **— Ce serveur TCP pourrait-il être adapté en serveur HTTP ? Quelles parties seraient conservées, quelles parties changeraient ?**  
-Pas direct. Faut virer toute la partie socket TCP, refaire l’entrée des commandes. Mais l’état (`etat_serveur`) peut rester. Faut découpler la logique métier.
+Pas direct. Faut virer toute la partie socket TCP, refaire l’entrée des commandes. Mais l’état (`etat_serveur`) peut rester. Donc il faut découpler la logique métier.
 
 **— Dans une perspective micro-services, quels modules seraient candidats naturels pour devenir des services indépendants ?**  
 Gestion des utilisateurs, gestion des canaux, logs, alerte. Tout ça peut être séparé.
