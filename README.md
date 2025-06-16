@@ -124,4 +124,8 @@ Pas vraiment. C’est souvent mis dans un `try/except` avec juste un `continue`.
 **— Est-ce qu’un canal vide est supprimé ?**  
 Non. Quand un utilisateur quitte, il est retiré du canal, mais le canal reste dans `etat_serveur["canaux"]`, même vide. Pas de suppression automatique.
 
+## 2.2 À produire
+
+### 2.2.1 Un schéma d’architecture fonctionnelle
+![Schéma de l’architecture fonctionnelle](./images/ArchiFonctionnelle.png)
 
