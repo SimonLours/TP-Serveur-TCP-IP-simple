@@ -89,7 +89,7 @@ Ici c’est du texte brut ligne par ligne. REST c’est structuré, avec verbe H
 
 ---------------------------------------------------------------------------------------------
 
-**Fonctions**
+## **Fonctions**
 
 ## 2.1 Analyse du code
 
@@ -138,4 +138,4 @@ Non. Quand un utilisateur quitte, il est retiré du canal, mais le canal reste d
 
 ---------------------------------------------------------------------------------------------
 
-**Limites**
+## **Limites**
