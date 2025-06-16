@@ -129,3 +129,9 @@ Non. Quand un utilisateur quitte, il est retiré du canal, mais le canal reste d
 ### 2.2.1 Un schéma d’architecture fonctionnelle
 ![Schéma de l’architecture fonctionnelle](./images/ArchiFonctionnelle.png)
 
+
+---------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------
