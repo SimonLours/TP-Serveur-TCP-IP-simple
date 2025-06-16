@@ -96,33 +96,33 @@ Ici c’est du texte brut ligne par ligne. REST c’est structuré, avec verbe H
 ### 1. Qui traite les commandes ?
 
 **— Quelle fonction interprète /msg, /join, etc. ?**  
-C’est la méthode `handle()` dans la classe `IRCHandler`. Elle lit chaque ligne envoyée par le client et appelle la fonction qui correspond à la commande.
+C’est la méthode `handle()` dans la classe `IRCHandler`. Elle lit chaque ligne envoyée par le client et appelle la fonction qui correspond à la commande
 
 **— Qui accède à la mémoire partagée etat_serveur ?**  
-Toutes les fonctions comme `set_pseudo()`, `rejoindre_canal()`, `envoyer_message()` accèdent à `etat_serveur`. Chaque accès est protégé par un `threading.Lock`.
+Toutes les fonctions comme `set_pseudo()`, `rejoindre_canal()`, `envoyer_message()` accèdent à `etat_serveur` et est protégé par un `threading.Lock`
 
 ---
 
 ### 2. Où sont stockées les infos ?
 
 **— Où est enregistré le canal courant d’un utilisateur ?**  
-Dans `etat_serveur["utilisateurs"][pseudo]["canal"]`.
+Dans `etat_serveur["utilisateurs"][pseudo]["canal"]`
 
 **— Où sont les flux de sortie (wfile) associés à chaque client ?**  
-Dans `etat_serveur["utilisateurs"][pseudo]["wfile"]`. Il est mis au moment du `/nick`.
+Dans `etat_serveur["utilisateurs"][pseudo]["wfile"]`. Il est mis au moment du `/nick`
 
 ---
 
 ### 3. Qui peut planter ?
 
 **— Que se passe-t-il si un client quitte sans envoyer /quit ?**  
-Si le client ferme juste la connexion, `readline()` renvoie vide, donc le handler s’arrête et fait le nettoyage quand même. Pas besoin d’envoyer `/quit`.
+Si le client ferme juste la connexion, `readline()` renvoie vide, donc le handler s’arrête et fait le nettoyage quand même. Pas besoin d’envoyer `/quit`
 
 **— Qu’arrive-t-il si un write() échoue ? Est-ce détecté ?**  
-Pas vraiment. C’est souvent mis dans un `try/except` avec juste un `continue`. Donc l’échec est silencieux, pas de message d’erreur.
+Pas vraiment. C’est souvent mis dans un `try/except` avec juste un `continue`. Donc l’échec est silencieux, pas de message d’erreur
 
 **— Est-ce qu’un canal vide est supprimé ?**  
-Non. Quand un utilisateur quitte, il est retiré du canal, mais le canal reste dans `etat_serveur["canaux"]`, même vide. Pas de suppression automatique.
+Non. Quand un utilisateur quitte, il est retiré du canal, mais le canal reste dans `etat_serveur["canaux"]`, même vide. Pas de suppression automatique
 
 ## 2.2 À produire
 
